@@ -343,6 +343,16 @@ Username: admin@zitadel.iam.example.com
 Password: Admin1234!
 ```
 
+> **⚠️ Login Note:**  
+> By default, you need to log in using the format  
+> `username@zitadel.<ExternalDomain>`  
+> (e.g., `admin@zitadel.iam.example.com`).  
+> 
+> If you have modified the value of `DefaultInstance.InstanceName` in your configuration,  
+> then the login format becomes:  
+> `username@<instance_name>.<domain_name>`  
+> (e.g., `admin@corp.iam.example.com`).
+
 ---
 
 ## ✅ Post-Setup Notes
