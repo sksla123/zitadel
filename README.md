@@ -241,7 +241,7 @@ tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32 > ./config/db_password.txt
 chmod 600 ./config/db_password.txt
 ```
 
-### 3. `zitadel-secrets.yaml`
+### 3. zitadel-secrets.yaml
 ```yaml
 Database:
   postgres:
@@ -257,7 +257,7 @@ Database:
 
 ## 🌐 Nginx Reverse Proxy Configuration
 
-### `/etc/nginx/conf.d/upstreams.conf`
+### /etc/nginx/conf.d/upstreams.conf
 ```nginx
 upstream zitadel_frontend {
     server 127.0.0.1:3001;
@@ -268,7 +268,7 @@ upstream zitadel_backend {
 }
 ```
 
-### `/etc/nginx/sites-enabled/auth`
+### /etc/nginx/sites-enabled/auth
 ```nginx
 server {
     listen 443 ssl http2;
