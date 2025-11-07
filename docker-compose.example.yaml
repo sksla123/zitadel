@@ -1,0 +1,102 @@
+services:
+  zitadel:
+    restart: "always"
+    container_name: "zitadel_be"
+    networks:
+      - "zitadel"
+    image: "ghcr.io/zitadel/zitadel:v4.6.4"
+    # secrets 활용하도록 변경
+    command: 'start-from-init --config /etc/zitadel/config.yaml --config /run/secrets/zitadel_secrets_file --steps /etc/zitadel/init-steps.yaml --masterkeyFile /run/secrets/zitadel_masterkey_file'
+    environment:
+      ZITADEL_TLS_ENABLED: false # [중요] Healthcheck 에러를 방지하기 위해서 필요한 설정
+    # nginx에서만 접근 가능하게 포트 설정 (방화벽을 통해 유사하게 구성할 수 있음)
+    ports:
+      - "127.0.0.1:3002:8080" # ZITADEL API
+      - "127.0.0.1:3001:3000" # ZITADEL Console/Login UI
+    user: "0"
+    # configs와 secrets를 사용해 각종 설정과 보안 관련 내용을 주입하도록 설정
+    configs:
+      - source: zitadel_config_file
+        target: /etc/zitadel/config.yaml
+      - source: zitadel_init_steps
+        target: /etc/zitadel/init-steps.yaml
+    secrets:
+      - zitadel_secrets_file
+      - zitadel_masterkey_file
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - "ztd-shared-data:/pat:delegated"
+    depends_on:
+      db:
+        condition: "service_healthy"
+
+  login:
+    restart: unless-stopped
+    container_name: "zitadel_fe"
+    image: ghcr.io/zitadel/zitadel-login:v4.6.4
+    # Nginx에서 설정할 도메인(Host)을 CUSTOM_REQUEST_HEADERS에 명시해야 합니다.
+    environment:
+      - ZITADEL_API_URL=http://localhost:8080
+      - CUSTOM_REQUEST_HEADERS=Host:iam.mydomain.com # 본인의 도메인으로 변경할 것
+      - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/pat/login-client.pat
+    network_mode: service:zitadel # zitadel_be 컨테이너의 네트워크를 공유
+    user: "1000"
+    volumes:
+      - "ztd-shared-data:/pat:ro"
+    depends_on:
+      zitadel:
+        condition: service_healthy
+        restart: false
+
+  db:
+    image: postgres:17-alpine
+    restart: always
+    # secrets 활용하도록 변경
+    environment:
+      - POSTGRES_USER=psg_admin
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password_file
+    networks:
+      - 'zitadel'
+    healthcheck:
+      # 기존 healthchekck 명령어가 정상 작동 안 해서 수정 ("-U" 뒤에 오는 인자는 postgres_user에 설정한 user명과 반드시 일치할 것)
+      test: ["CMD", "pg_isready", "-U", "psg_admin", "-d", "postgres"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - 'ztd-db-data:/var/lib/postgresql/data:rw'
+    secrets:
+      - db_password_file
+
+networks:
+  zitadel:
+
+volumes:
+  ztd-db-data:
+  ztd-shared-data:
+
+configs:
+  # Zitadel 일반 설정 파일 (configs)
+  zitadel_config_file:
+    file: ./config/zitadel-config.yaml
+  # Zitadel 초기화 단계 설정 파일 (configs)
+  zitadel_init_steps:
+    file: ./config/zitadel-init-steps.yaml
+
+secrets:
+  # Zitadel 비밀 정보 파일 (secrets)
+  zitadel_secrets_file:
+    file: ./config/zitadel-secrets.yaml
+  # Zitadel 마스터 키 파일 (secrets로 관리)
+  zitadel_masterkey_file:
+    file: ./config/zitadel_masterkey.txt
+  # DB 비밀번호 파일 (secrets)
+  db_password_file:
+    file: ./config/db_password.txt

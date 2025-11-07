@@ -1,0 +1,25 @@
+Log:
+  Level: 'info'
+
+# [중요] Nginx 리버스 프록시 도메인 정보
+ExternalPort: 443
+ExternalDomain: iam.example.com # 본인의 도메인으로 변경
+ExternalSecure: true # 리버스 프록시(Nginx)에서 HTTPS(SSL) 통신을 종료함을 알림
+
+TLS:
+  Enabled: false # [주의] 이 설정을 false로 해도, docker-compose.yaml의 ZITADEL_TLS_ENABLED: false 환경변수를 절대 삭제/수정하지 마십시오. (healthcheck 에러 방지용)
+
+Database:
+  postgres:
+    Host: 'db' # docker-compose.yaml의 db 서비스 이름
+    Port: 5432
+    Database: zitadel # 생성할 데이터베이스 이름
+    User:
+      SSL:
+        Mode: 'disable' # db-zitadel 간 통신은 SSL 사용 안 함
+    Admin:
+      SSL:
+        Mode: 'disable'
+
+# WebAuthN 할 때 뜨는 조직 명입니다.
+WebAuthNName: your-root-org-name # 원하는 이름으로 변경

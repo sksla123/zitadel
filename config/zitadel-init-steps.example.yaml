@@ -1,0 +1,16 @@
+FirstInstance:
+  LoginClientPatPath: /pat/login-client.pat
+  Org:
+    Human:
+      # [중요] 최초 관리자 계정 설정
+      # 로그인 시: admin@zitadel.iam.example.com (zitadel. + ExternalDomain)
+      # 또는 config 파일에서 DefaultInstance - InstanceName을 변경했다면, username@default_instance_name.+domain_name으로 로그인하셔야 합니다.
+      Username: 'admin'
+      Password: 'Admin1234!' # 복잡성 정책(대/소/특수/숫자)을 만족하는 임시 비밀번호
+      PasswordChangeRequired: true # [권장] true로 설정 시, 최초 로그인 시 반드시 비번을 변경해야 함
+    LoginClient:
+      Machine:
+        Username: 'login-client'
+        Name: 'Automatically Initialized IAM_LOGIN_CLIENT'
+      pat:
+        ExpirationDate: '2999-01-01T00:00:00Z' # Login UI용 PAT 토큰 만료일
